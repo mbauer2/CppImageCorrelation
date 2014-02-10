@@ -9,6 +9,15 @@ using std::ofstream;
 #include<limits>
 using std::numeric_limits;
 
+//This was an assignment for my C++ class that was part of a semester-long development process.
+//This particular part needed to read in two images in pgm format that could be of any type 
+//so using templates was necessary. When run, the program with find the closest match between
+//the source image and the target image to determine if the template image is inside the target image,
+//all with the intentions of doing operations as quickly as possible. It recieved 100% with the required
+//test cases and was on of the fastest, if not the fastest in the class.
+
+
+//Helper function, find sum of squares 
 template<typename TYPE>
 TYPE getTemplateSDev(TYPE* vals, TYPE mean, int size){
 	TYPE sum = 0;
@@ -16,20 +25,21 @@ TYPE getTemplateSDev(TYPE* vals, TYPE mean, int size){
 	for(int i = 0; i < size; i++){
 		sum += vals[i]*vals[i];
 	}
-	//cout << sum << " template SDEV" << endl;
+
 	return sum;
 }
 
-//////PROTOTYPE
+//Excessive function inputs not preferred, but helps avoid re-doing things because of different template types
 template<typename TYPE>
 int driveIt(Reader& readTemplate,  int tempRows, int tempCols, int tempSize, int mPix, TYPE& toChange, double typeMax, double typeMin, istream& istr1, istream& istr2){
-	TYPE* templateBody = readTemplate.readFile<TYPE>(istr2, typeMax, typeMin, 1);
+  //Read in the rest of the templates image
+  TYPE* templateBody = readTemplate.readFile<TYPE>(istr2, typeMax, typeMin, 1);
   if(templateBody == NULL){
   	cout << "00ps Template" << endl;
   	return -1;
   }
   Image<TYPE> templateImage(templateBody, tempRows, tempCols, tempSize, mPix);
-  //read target header and body
+
   Reader readTarget;
   int isValid2 = readTarget.readMagic(istr1, numeric_limits<double>::infinity(), -numeric_limits<double>::infinity());
   if(isValid2 == -1){
@@ -63,6 +73,7 @@ int driveIt(Reader& readTemplate,  int tempRows, int tempCols, int tempSize, int
   	return -1;
   }
   TYPE r1 =  targetImage.compareImages(templateImage, templateMean, tempDiffs, tempSDev);
+  //This is to indicate if any matches have been found and was later refined to not depend on numeric_limits
   if (r1 == -numeric_limits<TYPE>::infinity()){
   	if(0 == (int)r1){
   		
@@ -73,9 +84,6 @@ int driveIt(Reader& readTemplate,  int tempRows, int tempCols, int tempSize, int
   	}
   }
   toChange = r1;
-  //TYPE check = 0;
-  //if(check.typeid().name() == "char")
- // cout << (int)r1 << endl;
   delete [] tempDiffs;
 	return 1;
 }
@@ -104,6 +112,8 @@ int main(int argc, char* argv[]){
   		cout << "Template must be larger than one pixel" << endl;
   		return -1;
   	}
+        //It is necessary to find information about the template image before reading the body or the source image
+        //and then make decisions on what should be passed into the driveIt function
   	int mPix = readTemplate.getM();
   	if(filetype == 50){
   		if(tempMax <= 256){

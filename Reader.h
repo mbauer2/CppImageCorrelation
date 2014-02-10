@@ -46,6 +46,7 @@ class Reader{
   	int streamPosTran;
 };
 
+		//Run through the file and print errors if there is any invlaid input
 		template <typename TYPE>
 		TYPE* Reader::readFile(istream& istr, double tempMax, double tempMin, int isTemp){
 			TYPE* readData = new TYPE[s];
@@ -53,12 +54,11 @@ class Reader{
 			string textline = tran;
 			int pos = posTran;
 			stringstream line_str(textline);
-			//istr.seekg(streamPosTran);
 			line_str.seekg(pos);		
 			while(!istr.fail()){
 				TYPE nextNum;
 				char res = getNextNumber<TYPE>(line_str, tempMax, tempMin, isTemp, nextNum);
-				if(res == 'a'){
+				if(res == 'a'){//End of line has been reached but there were no errors
 					if(istr.eof()){
 						break;
 					}
@@ -75,8 +75,8 @@ class Reader{
 					return NULL;
 				}
 				else{
-					if(nextNum < m){
-						if(inputCount == s){
+					if(nextNum < m){//valid input, check to make sure it is less than the max value
+						if(inputCount == s){//Inputs have exceeded the given file size
 							cout << "Error on line " << line_counter << ", too many numbers in file" << endl;
 							delete [] readData;
 							return NULL;
@@ -114,16 +114,12 @@ class Reader{
 				return readData;
 			}
 		}
-		
+	
+		//Searches through the file for the next valid input	
 		template <typename TYPE>
 		char Reader::getNextNumber(stringstream& line_str, double tempMax, double tempMin, int isTemp, TYPE& nextNum){
 			double toRead;
 			TYPE toReturn;
-	//		if(isTemp == 0){
-		//		cout << "Current String: " << line_str.str() << " at " << line_str.tellg() << endl;
-		//	}
-			
-			line_str >> toRead;
 			if(line_str.eof() && line_str.fail()){ //	go to next line
 				return 'a';
 			}
@@ -152,15 +148,12 @@ class Reader{
 				}
 			}else{
 				if(toRead > m || toRead < -m){
-					//cout << m << " " << toRead << endl;
 					return 'c';
 				}
 				if(toRead < tempMin){
-					//cout << "Clipping " << toRead << " to " << tempMin << endl;
 					toRead = tempMin;					
 				}
 				else if(toRead > tempMax){
-				 // cout << "Clipping " << toRead << " to " << tempMax << endl;
 					toRead = tempMax;
 				}
 				toReturn = (TYPE)toRead;

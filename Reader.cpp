@@ -17,6 +17,9 @@ using std::stringstream;
 #include<limits>
 using std::numeric_limits;
 
+//The pgm files that we used had a specific header format, starting with
+//the "magic number" that determines the templated type of the rest of the program.
+//The vector importantInfo holds this number, as well as dimensions of the picture.
 int Reader::readMagic(istream& istr, double fakeMax, double fakeMin){
 	line_counter = 1;
 	string textline;
@@ -59,7 +62,6 @@ int Reader::readMagic(istream& istr, double fakeMax, double fakeMin){
 						return -1;
 					}
 					else{
-						//cout << "Next Header Value: " << headerInfo << endl;
 						if(headerInfo < 0){
 							cout << headerInfo << endl;
 							cout << "Error on line " << line_counter << ", negative header values not allowed." << endl;
@@ -74,13 +76,11 @@ int Reader::readMagic(istream& istr, double fakeMax, double fakeMin){
 							pos = 0;
 							line_counter++;
 						}
-						//cout << "pushing headerInfo: " << headerInfo << endl;
 						importantInfo.push_back(headerInfo);
 						cont = 1;
 					}
 				}
 			}
-			//cout << "m from header reader is " << importantInfo[2] << endl;
 			w = importantInfo[0];
 			h = importantInfo[1];
 			s = w*h;
@@ -90,7 +90,6 @@ int Reader::readMagic(istream& istr, double fakeMax, double fakeMin){
 			streamPosTran = istr.tellg();
 			
 		}
-	//	cout << "Exiting header" << endl;
 		return 0;
 	}
 	else{

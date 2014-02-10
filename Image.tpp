@@ -44,13 +44,6 @@ class Image{
 		TYPE calcDiff(const TYPE* tempDiffs, TYPE tempDiffSum, int index, int r, int c, int curRow, int curCol) const;
 		TYPE* getTemplateDiffs(TYPE mean) const;
 		
-		//double getStdDev(double means, int center, int totalNums, int tL, int tR, int tU, int tD);
-		//double getEdNormVal(double mean, double stdDev, int ind);
-		//double scaleValue(TYPE minimum, TYPE maximum, double edNorm, int ind);
-		//void edgeNormalize();
-		//double getNormMean(int center);
-		//void writeNewFile(ostream& ostr);
-		
 	private:
 		TYPE* data;
 		TYPE** rowPtr;
@@ -63,23 +56,10 @@ class Image{
 
 template <typename TYPE>
 Image<TYPE>::Image(istream& istr){
-	//data = NULL;
-	//rowPtr = NULL;
-	//correct = readFile(istr);
-	//if(size == 1){
-	//	correct = 1;
-	//	cout << "Image must be larger than one pixel" << endl;
-	//}
-	//if(correct == 0){
-	//	rowPtr = new TYPE*[rows];
-	//	TYPE* temp = data;
-		//for(int i = 0; i < rows; i++){
-	//		rowPtr[i] = temp;
-		//	temp += cols;
-		//}
-	//}
+	//Removed, no longer needed
 }
 
+//Constructor
 template <typename TYPE>
 Image<TYPE>::Image(TYPE* d, int h, int w, int s, int m){
 	data = d;
@@ -97,6 +77,7 @@ Image<TYPE>::Image(TYPE* d, int h, int w, int s, int m){
 	}
 }
 
+//Destructor, delete allocated memory if necessary
 template <typename TYPE>
 Image<TYPE>::~Image(){
 	if(data != NULL){
@@ -115,6 +96,7 @@ Image<TYPE>& Image<TYPE>::operator =(Image img){
 	return *this;
 }
 
+//Copy constructor
 template <typename TYPE>
 Image<TYPE>::Image(const Image& img){
 	rows = img.rows;
@@ -175,6 +157,7 @@ TYPE Image<TYPE>::at(int r, int c) const{
 	return rowPtr[r][c];
 }
 
+//Find the minimum in a dataset
 template <typename TYPE>
 TYPE Image<TYPE>::Min(const TYPE* d, int sizeOf) const{
 	TYPE minVal = d[0];
@@ -188,6 +171,7 @@ TYPE Image<TYPE>::Min(const TYPE* d, int sizeOf) const{
 	return minVal;
 }
 
+//Find maximum in a dataset
 template <typename TYPE>
 TYPE Image<TYPE>::Max(const TYPE* d, int sizeOf) const{
 	TYPE maxVal = d[0];
@@ -201,6 +185,8 @@ TYPE Image<TYPE>::Max(const TYPE* d, int sizeOf) const{
 	return maxVal;
 }
 
+//Need mostly for previous assignment iteration. Calculates a window of operation for
+//standard deviation calculations 
 template <typename TYPE>
 int Image<TYPE>::calcRange(int hi, int lo) const{
 	if(lo == 0){
@@ -212,6 +198,8 @@ int Image<TYPE>::calcRange(int hi, int lo) const{
 	}
 }
 
+//Calculate mean value in of a window of a specified height and width
+//tL = to left, tR = to right, etc. 
 template <typename TYPE>
 TYPE Image<TYPE>::getEdgeMean(int center, int totalNums, int tL, int tR, int tU, int tD, int curRow, int curCol) const{
 	TYPE tot = 0;
@@ -224,10 +212,11 @@ TYPE Image<TYPE>::getEdgeMean(int center, int totalNums, int tL, int tR, int tU,
 		}
 	}
 	TYPE mean = tot/totalNums;
-//	cout << tot << " " << totalNums << " :"<< mean << endl;
 	return mean;
 }
 
+//Takes in template image information and finds the maximum correlation value(-1 to 1) by comparing it against every possible
+//overlap
 template <typename TYPE>
 TYPE Image<TYPE>::compareImages(const Image<TYPE>& templateImage, TYPE templateMean, const TYPE* templateDiffs, TYPE tempSDev) const{
 	int boundX = templateImage.cols;
@@ -237,21 +226,19 @@ TYPE Image<TYPE>::compareImages(const Image<TYPE>& templateImage, TYPE templateM
 	double currMax = -numeric_limits<double>::infinity();
 	for(int i = 0; i < farDown; i++){
 		for(int j = 0; j < farRight; j++){
-//			int currIn = i*cols + j;
 			TYPE cVal = calcDiff(templateDiffs, tempSDev, 0, boundY, boundX, i, j);
-//			cout << "cVal is: "<< cVal << endl;
 			if(cVal == 1){
 				return 1;
 			}
 			if(cVal > currMax){
 				currMax = cVal;
-//				cout << j << " " << i << endl;
 			}
 		}
 	}		
 	return currMax;
 }
 
+//Loop through all pixels in a given window to calculate deviations from the given mean
 template <typename TYPE>
 TYPE Image<TYPE>::calcDiff(const TYPE* tempDiffs, TYPE tempDiffSum, int index, int r, int c, int curRow, int curCol) const{
 	TYPE targetMean = getEdgeMean(index, r*c, 0, c-1, 0, r-1, curRow, curCol);
@@ -260,21 +247,16 @@ TYPE Image<TYPE>::calcDiff(const TYPE* tempDiffs, TYPE tempDiffSum, int index, i
 	int count = 0;
 	int maxRow = curRow + r;
 	int maxCol = curCol + c;
-//	cout << r << " " << c << endl;
-//	cout << index << " index " << endl;
 	for(int i = curRow; i < maxRow; i++){
 		for(int j = curCol; j < maxCol; j++){
 			//int currIn = index + i*cols + j;
-//			cout << data[currIn] << endl;
 			TYPE targetDiff = rowPtr[i][j] - targetMean;
-	//		cout << targetDiff << " * " << tempDiffs[count] << endl;
 			num += targetDiff*tempDiffs[count];
 			count++;
 			den += targetDiff*targetDiff;
 			
 		}
 	}
-//	cout << den << endl;
 	den *= tempDiffSum;
 	den = sqrt(den);
 	
@@ -283,40 +265,19 @@ TYPE Image<TYPE>::calcDiff(const TYPE* tempDiffs, TYPE tempDiffSum, int index, i
 		toReturn = -numeric_limits<TYPE>::infinity();
 	}
 	else{
-//		cout << num << ", " << den << endl;
-		//cout << "numerator:" << num << " den: " << den << endl;
 		toReturn = num/den;
 	}
 	return toReturn;
 }
 
+//Optimization function to avoid doing repeat calculations on the template image
 template <typename TYPE>
 TYPE* Image<TYPE>::getTemplateDiffs(TYPE mean) const{
 	TYPE* toReturn = new TYPE[size];
 	for(int i = 0; i < size; i++){
 		toReturn[i] = data[i] - mean;
-//		cout << data[i] << " " << toReturn[i] << " intermediate value " << endl;
 	}
 	return toReturn;
 }
 
-
-//template <typename TYPE>
-//template <typename TYPE>
-
-//template <typename TYPE>
-
-//template <typename TYPE>
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
